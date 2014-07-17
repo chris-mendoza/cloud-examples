@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, pyrax
+import os, pyrax, time
 import pyrax.exceptions as exc
 
 def cloud_connect():
@@ -53,27 +53,49 @@ def list_flavors():
         print "Name:", flavor.name, "-- ID:", flavor.id
 
 def hard_reboot(id, dc):
-  cs = pyrax.connect_to_cloudservers(region=dc)
-  server = cs.servers.get(id)
-  server.reboot("hard")
-  after_reboot = cs.servers.get(active.id)
-  print "Server Status: ", after_reboot.status
+    cs = pyrax.connect_to_cloudservers(region=dc)
+    server = cs.servers.get(id)
+    server.reboot("hard")
+    after_reboot = cs.servers.get(active.id)
+    print "Server Status: ", after_reboot.status
 
 def soft_reboot(id, dc):
-  cs = pyrax.connect_to_cloudservers(region=dc)
-  server = cs.servers.get(id)
-  server.reboot("hard")
-  after_reboot = cs.servers.get(active.id)
-  print "Server Status: ", after_reboot.status
+    cs = pyrax.connect_to_cloudservers(region=dc)
+    server = cs.servers.get(id)
+    server.reboot("hard")
+    after_reboot = cs.servers.get(active.id)
+    print "Server Status: ", after_reboot.status
 
 def create_image(name, id, dc):
-  cs = pyrax.connect_to_cloudservers(region=dc)
-  server = cs.servers.get(id)
-  print "Image ID: ", server.create_image(name)
-  
+    cs = pyrax.connect_to_cloudservers(region=dc)
+    server = cs.servers.get(id)
+    print "Image ID: ", server.create_image(name)
+
+def create_server(name, img_id, flv_id, dc):
+    cs = pyrax.connect_to_cloudservers(region=dc)
+    new_server = cs.servers.create(name, img_id, flv_id)
+    print "-"*30, "\nName:", new_server.name, "\nID:", new_server.id, \
+    "\nStatus:", new_server.status, "\nAdmin Password:", new_server.adminPass
+    
+    new_serverid = new_server.id
+    while not (new_server.networks):
+    	time.sleep(50)
+    	new_server = cs.servers.get(new_serverid)
+    	print "IPv6:", new_server.networks["public"][1], \
+        "\nIPv4:", new_server.networks["public"][0], \
+        "\nPrivate IP", new_server.networks["private"][0]
+
+def delete_server(id, dc):
+	cs = pyrax.connect_to_cloudservers(region=dc)
+	server = cs.servers.get(id)
+	print "Deleting Server:" server.delete()
+
 if __name__ == "__main__":
-  dc = "DFW"
-  name = "test12345"
-  srv_id = "81d0642f-2011-42de-895e-ad1d374d0294"
-  cloud_connect()
-  create_image(name, srv_id, dc)
+    dc = "DFW"
+    name = "test12345"
+#  srv_id = ""
+    img_id = ""
+    flv_id = "performance1-1"
+
+    cloud_connect()
+#    create_server(name, img_id, flv_id, dc)
